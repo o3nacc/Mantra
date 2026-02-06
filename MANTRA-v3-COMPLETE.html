@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MANTRA - Monitoring Perubahan Tarra</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            font-size: 48px;
+        }
+
+        .header h1 {
+            color: #1e3c72;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .stat-card h3 {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .number {
+            font-size: 38px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2.5fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #1e3c72;
+            margin-bottom: 25px;
+            font-size: 20px;
+            border-bottom: 3px solid #1e3c72;
+            padding-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h3 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chart-filters {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border: 2px solid #e9ecef;
+        }
+
+        .chart-filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        label .required {
+            color: #dc3545;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .datetime-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(30, 60, 114, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .export-buttons .btn {
+            width: auto;
+            flex: 1;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 13px;
+        }
+
+        th {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 14px 10px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            position: sticky;
+            top: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+
+        .status-draft {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-complete {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .filter-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+            margin-bottom: 15px;
+        }
+
+        .detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .detail-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 35px;
+            border-radius: 12px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            border-bottom: 3px solid #1e3c72;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            color: #1e3c72;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .close-modal {
+            font-size: 32px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .info-value {
+            color: #333;
+            font-size: 14px;
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .photo-item {
+            position: relative;
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+
+        .photo-item:hover {
+            transform: scale(1.05);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border: 3px solid #e0e0e0;
+        }
+
+        .photo-item img:hover {
+            border-color: #1e3c72;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 16px;
+            background: #f8f9fa;
+            border: 3px dashed #1e3c72;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #1e3c72;
+        }
+
+        .file-input-label:hover {
+            background: #e7f1ff;
+            border-color: #2a5298;
+        }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .remove-photo {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .diff-value {
+            font-weight: 700;
+        }
+
+        .diff-positive {
+            color: #28a745;
+        }
+
+        .diff-negative {
+            color: #dc3545;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 25px;
+            color: #666;
+        }
+
+        .accept-reject-section {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #ffc107;
+        }
+
+        .accept-reject-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .accept-reject-buttons .btn {
+            flex: 1;
+        }
+
+        .document-preview {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 2px solid #dee2e6;
+        }
+
+        .document-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .time-diff {
+            background: #e7f1ff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #1e3c72;
+            display: inline-block;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .datetime-group {
+                grid-template-columns: 1fr;
+            }
+
+            .export-buttons {
+                flex-direction: column;
+            }
+            
+            .logo-section {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-section">
+                <div class="logo">🚛</div>
+                <div>
+                    <h1>MANTRA</h1>
+                    <p>Monitoring Perubahan Tarra</p>
+                </div>
+            </div>
+            <p style="margin-top: 5px; font-size: 14px;">Monitoring dan Tracking Perubahan Tarra</p>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <h3>Total Permohonan Tarra</h3>
+                <div class="number" id="totalPerubahan">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Status Draft</h3>
+                <div class="number" id="draftCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Complete</h3>
+                <div class="number" id="completeCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Rejected</h3>
+                <div class="number" id="rejectedCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Hari Ini</h3>
+                <div class="number" id="todayCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Bulan Ini</h3>
+                <div class="number" id="monthCount">0</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <h3>📊 Perubahan Tarra per PKS</h3>
+                <div class="chart-filters">
+                    <div class="chart-filter-row">
+                        <select id="chartPKSFilter" onchange="updateChartPKS()" style="font-size:12px;padding:8px;">
+                            <option value="">Semua PKS</option>
+                        </select>
+                        <select id="chartPKSPeriod" onchange="updateChartPKS()" style="font-size:12px;padding:8px;">
+                            <option value="all">Semua Waktu</option>
+                            <option value="month">Bulan Ini</option>
+                            <option value="week">Minggu Ini</option>
+                        </select>
+                    </div>
+                </div>
+                <canvas id="chartPKS"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>📈 Status Permohonan</h3>
+                <div class="chart-filters">
+                    <div class="chart-filter-row">
+                        <select id="chartStatusPeriod" onchange="updateChartStatus()" style="font-size:12px;padding:8px;">
+                            <option value="all">Semua Waktu</option>
+                            <option value="month">Bulan Ini</option>
+                            <option value="week">Minggu Ini</option>
+                        </select>
+                    </div>
+                </div>
+                <canvas id="chartStatus"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>📅 Trend Bulanan</h3>
+                <div class="chart-filters">
+                    <div class="chart-filter-row">
+                        <select id="chartTrendMonths" onchange="updateChartTrend()" style="font-size:12px;padding:8px;">
+                            <option value="6">6 Bulan</option>
+                            <option value="12">12 Bulan</option>
+                            <option value="3">3 Bulan</option>
+                        </select>
+                    </div>
+                </div>
+                <canvas id="chartTrend"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🏆 Top Transportir</h3>
+                <div class="chart-filters">
+                    <div class="chart-filter-row">
+                        <select id="chartTransportirTop" onchange="updateChartTransportir()" style="font-size:12px;padding:8px;">
+                            <option value="10">Top 10</option>
+                            <option value="5">Top 5</option>
+                            <option value="15">Top 15</option>
+                        </select>
+                        <select id="chartTransportirPeriod" onchange="updateChartTransportir()" style="font-size:12px;padding:8px;">
+                            <option value="all">Semua Waktu</option>
+                            <option value="month">Bulan Ini</option>
+                        </select>
+                    </div>
+                </div>
+                <canvas id="chartTransportir"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>👤 Perubahan per PIC</h3>
+                <div class="chart-filters">
+                    <div class="chart-filter-row">
+                        <select id="chartPICTop" onchange="updateChartPIC()" style="font-size:12px;padding:8px;">
+                            <option value="10">Top 10</option>
+                            <option value="5">Top 5</option>
+                            <option value="15">Top 15</option>
+                        </select>
+                        <select id="chartPICPeriod" onchange="updateChartPIC()" style="font-size:12px;padding:8px;">
+                            <option value="all">Semua Waktu</option>
+                            <option value="month">Bulan Ini</option>
+                        </select>
+                    </div>
+                </div>
+                <canvas id="chartPIC"></canvas>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Form Input -->
+            <div class="card">
+                <h2>📝 Catat Perubahan Baru</h2>
+                <form id="formPerubahan">
+                    <div class="form-group">
+                        <label>Nama Transportir <span class="required">*</span></label>
+                        <input type="text" id="namaTransportir" required list="transportirList">
+                        <datalist id="transportirList"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label>PKS / Unit <span class="required">*</span></label>
+                        <select id="pksUnit" required>
+                            <option value="">-- Pilih PKS --</option>
+                            <option value="PKS Tanah Putih">PKS Tanah Putih</option>
+                            <option value="PKS Tanjung Medan">PKS Tanjung Medan</option>
+                            <option value="PKS Sei Galuh">PKS Sei Galuh</option>
+                            <option value="PKS Sei Pagar">PKS Sei Pagar</option>
+                            <option value="PKS Sei Garo">PKS Sei Garo</option>
+                            <option value="PKS Sei Buatan">PKS Sei Buatan</option>
+                            <option value="PKS Lubuk Dalam">PKS Lubuk Dalam</option>
+                            <option value="PKS Tandun">PKS Tandun</option>
+                            <option value="PKS Terantam">PKS Terantam</option>
+                            <option value="PKS Sei Tapung">PKS Sei Tapung</option>
+                            <option value="PKS Sei Rokan">PKS Sei Rokan</option>
+                            <option value="PKS Sei Intan">PKS Sei Intan</option>
+                            <option value="PPIS Tandun">PPIS Tandun</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nomor Polisi <span class="required">*</span></label>
+                        <input type="text" id="noPol" required placeholder="Contoh: BM 1234 AB">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tarra Lama (kg) <span class="required">*</span></label>
+                        <input type="number" id="tarraLama" required step="0.01">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tarra Baru (kg) <span class="required">*</span></label>
+                        <input type="number" id="tarraBaru" required step="0.01">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Selisih Tarra</label>
+                        <input type="text" id="selisihTarra" readonly style="background: #f8f9fa; font-weight: 700;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tanggal & Waktu Perubahan <span class="required">*</span></label>
+                        <div class="datetime-group">
+                            <input type="date" id="tanggalPerubahan" required>
+                            <input type="time" id="waktuPerubahan" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📄 Import Surat Transportir</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="suratTransportir" accept="image/*,application/pdf">
+                            <label for="suratTransportir" class="file-input-label">
+                                📎 Pilih Surat Transportir
+                            </label>
+                        </div>
+                        <div id="previewSuratTransportir" class="document-preview" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status Surat Pemasaran <span class="required">*</span></label>
+                        <select id="statusSurat" required>
+                            <option value="">-- Pilih Status --</option>
+                            <option value="draft">Draft (Belum Ada Nomor)</option>
+                            <option value="approved">Sudah Ada Nomor Surat</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="nomorSuratGroup" style="display: none;">
+                        <label>Nomor Surat Pemasaran</label>
+                        <input type="text" id="nomorSurat" placeholder="Contoh: 001/PM/2024">
+                    </div>
+
+                    <div class="form-group" id="suratPemasaranGroup" style="display: none;">
+                        <label>📄 Import Surat Pemasaran (Draft/Approved)</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="suratPemasaran" accept="image/*,application/pdf">
+                            <label for="suratPemasaran" class="file-input-label">
+                                📎 Pilih Surat Pemasaran (Bisa Draft atau Sudah Ber-Nomor)
+                            </label>
+                        </div>
+                        <div id="previewSuratPemasaran" class="document-preview" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Keterangan/Alasan</label>
+                        <textarea id="keterangan" placeholder="Catatan tambahan..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Upload Foto Alasan Perubahan (Optional)</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="fotoInput" accept="image/*" multiple>
+                            <label for="fotoInput" class="file-input-label">
+                                📷 Klik untuk pilih foto (bisa lebih dari 1)
+                            </label>
+                        </div>
+                        <div id="previewContainer" class="preview-container"></div>
+                    </div>
+
+                    <div class="accept-reject-section">
+                        <h4 style="margin-bottom: 10px; color: #856404;">⚠️ Review & Approval</h4>
+                        <p style="font-size: 13px; color: #666; margin-bottom: 5px;">Periksa data sebelum menyimpan</p>
+                        <div class="accept-reject-buttons">
+                            <button type="button" class="btn btn-danger" onclick="rejectEntry()">❌ REJECT</button>
+                            <button type="submit" class="btn btn-success">✅ ACCEPT & SIMPAN</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nama PIC yang Melakukan Perubahan <span class="required">*</span></label>
+                        <input type="text" id="namaPIC" required placeholder="Nama lengkap PIC">
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabel Data -->
+            <div class="card">
+                <h2>📋 Data Perubahan Tarra</h2>
+                
+                <div class="export-buttons">
+                    <button class="btn btn-success" onclick="exportToExcel()">📗 Export Excel</button>
+                    <button class="btn btn-info" onclick="exportToPDF()">📕 Export PDF</button>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label>Filter PKS/Unit</label>
+                            <select id="filterPKS" onchange="filterData()">
+                                <option value="">Semua PKS</option>
+                                <option value="PKS Tanah Putih">PKS Tanah Putih</option>
+                                <option value="PKS Tanjung Medan">PKS Tanjung Medan</option>
+                                <option value="PKS Sei Galuh">PKS Sei Galuh</option>
+                                <option value="PKS Sei Pagar">PKS Sei Pagar</option>
+                                <option value="PKS Sei Garo">PKS Sei Garo</option>
+                                <option value="PKS Sei Buatan">PKS Sei Buatan</option>
+                                <option value="PKS Lubuk Dalam">PKS Lubuk Dalam</option>
+                                <option value="PKS Tandun">PKS Tandun</option>
+                                <option value="PKS Terantam">PKS Terantam</option>
+                                <option value="PKS Sei Tapung">PKS Sei Tapung</option>
+                                <option value="PKS Sei Rokan">PKS Sei Rokan</option>
+                                <option value="PKS Sei Intan">PKS Sei Intan</option>
+                                <option value="PPIS Tandun">PPIS Tandun</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Filter Transportir</label>
+                            <select id="filterTransportir" onchange="filterData()">
+                                <option value="">Semua Transportir</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Filter Status</label>
+                            <select id="filterStatus" onchange="filterData()">
+                                <option value="">Semua Status</option>
+                                <option value="draft">Draft</option>
+                                <option value="approved">Complete</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label>Filter Waktu</label>
+                            <select id="filterWaktu" onchange="handleWaktuFilter()">
+                                <option value="">Semua Waktu</option>
+                                <option value="today">Hari Ini</option>
+                                <option value="week">Minggu Ini</option>
+                                <option value="month">Bulan Ini</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="customDateFrom" style="display: none;">
+                            <label>Dari Tanggal</label>
+                            <input type="date" id="dateFrom" onchange="filterData()">
+                        </div>
+                        <div class="form-group" id="customDateTo" style="display: none;">
+                            <label>Sampai Tanggal</label>
+                            <input type="date" id="dateTo" onchange="filterData()">
+                        </div>
+                        <div class="form-group">
+                            <label>Cari No. Polisi</label>
+                            <input type="text" id="searchNoPol" onkeyup="filterData()" placeholder="Cari...">
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-warning" onclick="resetFilter()">Reset Filter</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tgl & Jam</th>
+                                <th>PKS/Unit</th>
+                                <th>Transportir</th>
+                                <th>No. Polisi</th>
+                                <th>Tarra Lama</th>
+                                <th>Tarra Baru</th>
+                                <th>Selisih</th>
+                                <th>Status</th>
+                                <th>No. Surat</th>
+                                <th>Selisih Waktu</th>
+                                <th>PIC</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTable">
+                            <tr>
+                                <td colspan="12" style="text-align: center; color: #999;">
+                                    <div class="loading">Loading data...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="detail-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detail Perubahan Tarra</h2>
+                <span class="close-modal" onclick="closeModal()">&times;</span>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="btn btn-info btn-sm" onclick="downloadDetailPDF()" style="flex: 1;">📕 Download PDF</button>
+                <button class="btn btn-success btn-sm" onclick="downloadDetailJPEG()" style="flex: 1;">🖼️ Download JPEG</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // Cloud storage key
+        const STORAGE_KEY = 'mantra-data-v2';
+        const PHOTO_KEY_PREFIX = 'mantra-photo-';
+        const DOC_KEY_PREFIX = 'mantra-doc-';
+        
+        // Data
+        let tarraData = [];
+        let filteredData = [];
+        let tempPhotos = [];
+        let tempSuratTransportir = null;
+        let tempSuratPemasaran = null;
+        let currentDetailId = null;
+        let currentUpdateId = null;
+        let tempUpdateSurat = null;
+
+        // Charts
+        let chartPKS, chartStatus, chartTrend, chartTransportir, chartPIC;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('MANTRA Initializing...');
+            setDefaultDateTime();
+            await loadData();
+            console.log('Data loaded:', tarraData.length, 'records');
+            updateStats();
+            renderTable();
+            updateTransportirFilter();
+            initCharts();
+            populateChartFilters();
+            updateAllCharts();
+            
+            // Auto calculate selisih
+            document.getElementById('tarraLama').addEventListener('input', calculateDiff);
+            document.getElementById('tarraBaru').addEventListener('input', calculateDiff);
+            
+            // Show/hide surat pemasaran
+            document.getElementById('statusSurat').addEventListener('change', function() {
+                const nomorSuratGroup = document.getElementById('nomorSuratGroup');
+                const suratPemasaranGroup = document.getElementById('suratPemasaranGroup');
+                if (this.value === 'approved') {
+                    nomorSuratGroup.style.display = 'block';
+                    suratPemasaranGroup.style.display = 'block';
+                } else if (this.value === 'draft') {
+                    nomorSuratGroup.style.display = 'none';
+                    suratPemasaranGroup.style.display = 'block'; // Show for draft too
+                } else {
+                    nomorSuratGroup.style.display = 'none';
+                    suratPemasaranGroup.style.display = 'none';
+                }
+            });
+
+            // Handle file uploads
+            document.getElementById('fotoInput').addEventListener('change', handlePhotoUpload);
+            document.getElementById('suratTransportir').addEventListener('change', handleSuratTransportir);
+            document.getElementById('suratPemasaran').addEventListener('change', handleSuratPemasaran);
+        });
+
+        // Load data from storage (localStorage primary for demo)
+        async function loadData() {
+            try {
+                // Try localStorage first (works everywhere)
+                const localData = localStorage.getItem(STORAGE_KEY);
+                if (localData) {
+                    tarraData = JSON.parse(localData);
+                    console.log('Loaded from localStorage:', tarraData.length, 'records');
+                    return;
+                }
+                
+                // Try cloud storage if available
+                if (window.storage) {
+                    const result = await window.storage.get(STORAGE_KEY);
+                    if (result && result.value) {
+                        tarraData = JSON.parse(result.value);
+                        console.log('Loaded from cloud storage:', tarraData.length, 'records');
+                        return;
+                    }
+                }
+                
+                // No data found
+                tarraData = [];
+                console.log('No existing data, starting fresh');
+            } catch (error) {
+                console.log('Storage error:', error.message);
+                tarraData = [];
+            }
+        }
+
+        // Save data to storage (localStorage primary for demo)
+        async function saveData() {
+            try {
+                // Always save to localStorage (guaranteed to work)
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(tarraData));
+                console.log('Saved to localStorage:', tarraData.length, 'records');
+                
+                // Also try cloud storage if available
+                if (window.storage) {
+                    try {
+                        await window.storage.set(STORAGE_KEY, JSON.stringify(tarraData));
+                        console.log('Saved to cloud storage');
+                    } catch (cloudError) {
+                        console.log('Cloud storage not available, localStorage only');
+                    }
+                }
+                return true;
+            } catch (error) {
+                console.error('Error saving data:', error);
+                alert('⚠️ Gagal menyimpan data. Coba lagi.');
+                return false;
+            }
+        }
+
+        function setDefaultDateTime() {
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().slice(0, 5);
+            
+            document.getElementById('tanggalPerubahan').value = dateStr;
+            document.getElementById('waktuPerubahan').value = timeStr;
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            }).format(num);
+        }
+
+        function calculateDiff() {
+            const tarraLama = parseFloat(document.getElementById('tarraLama').value) || 0;
+            const tarraBaru = parseFloat(document.getElementById('tarraBaru').value) || 0;
+            const selisih = tarraBaru - tarraLama;
+            
+            const selisihField = document.getElementById('selisihTarra');
+            selisihField.value = formatNumber(selisih) + ' Kg';
+            
+            if (selisih > 0) {
+                selisihField.style.color = '#28a745';
+            } else if (selisih < 0) {
+                selisihField.style.color = '#dc3545';
+            } else {
+                selisihField.style.color = '#333';
+            }
+        }
+
+        function handlePhotoUpload(e) {
+            const files = Array.from(e.target.files);
+            const previewContainer = document.getElementById('previewContainer');
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const photoData = e.target.result;
+                    tempPhotos.push(photoData);
+                    
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    previewItem.innerHTML = `
+                        <img src="${photoData}" alt="Preview">
+                        <button type="button" class="remove-photo" onclick="removePhoto(${tempPhotos.length - 1})">&times;</button>
+                    `;
+                    previewContainer.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removePhoto(index) {
+            tempPhotos.splice(index, 1);
+            const previewContainer = document.getElementById('previewContainer');
+            previewContainer.innerHTML = '';
+            
+            tempPhotos.forEach((photo, idx) => {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                previewItem.innerHTML = `
+                    <img src="${photo}" alt="Preview">
+                    <button type="button" class="remove-photo" onclick="removePhoto(${idx})">&times;</button>
+                `;
+                previewContainer.appendChild(previewItem);
+            });
+        }
+
+        function handleSuratTransportir(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempSuratTransportir = e.target.result;
+                const preview = document.getElementById('previewSuratTransportir');
+                preview.style.display = 'block';
+                preview.innerHTML = `
+                    <div class="document-item">
+                        <span style="font-size: 24px;">📄</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600;">${file.name}</div>
+                            <div style="font-size: 12px; color: #666;">${(file.size / 1024).toFixed(2)} KB</div>
+                        </div>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeSuratTransportir()">Hapus</button>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeSuratTransportir() {
+            tempSuratTransportir = null;
+            document.getElementById('suratTransportir').value = '';
+            document.getElementById('previewSuratTransportir').style.display = 'none';
+        }
+
+        function handleSuratPemasaran(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempSuratPemasaran = e.target.result;
+                const preview = document.getElementById('previewSuratPemasaran');
+                preview.style.display = 'block';
+                preview.innerHTML = `
+                    <div class="document-item">
+                        <span style="font-size: 24px;">📄</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600;">${file.name}</div>
+                            <div style="font-size: 12px; color: #666;">${(file.size / 1024).toFixed(2)} KB</div>
+                        </div>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeSuratPemasaran()">Hapus</button>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeSuratPemasaran() {
+            tempSuratPemasaran = null;
+            document.getElementById('suratPemasaran').value = '';
+            document.getElementById('previewSuratPemasaran').style.display = 'none';
+        }
+
+        function rejectEntry() {
+            if (!confirm('Yakin ingin REJECT perubahan ini?\n\nData tidak akan disimpan.')) return;
+            
+            document.getElementById('formPerubahan').reset();
+            setDefaultDateTime();
+            tempPhotos = [];
+            tempSuratTransportir = null;
+            tempSuratPemasaran = null;
+            document.getElementById('previewContainer').innerHTML = '';
+            document.getElementById('previewSuratTransportir').style.display = 'none';
+            document.getElementById('previewSuratPemasaran').style.display = 'none';
+            document.getElementById('nomorSuratGroup').style.display = 'none';
+            document.getElementById('suratPemasaranGroup').style.display = 'none';
+            
+            alert('❌ Perubahan telah di-REJECT dan data tidak disimpan.');
+        }
+
+        // Form submission
+        document.getElementById('formPerubahan').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('Form submitted!');
+            
+            const tanggal = document.getElementById('tanggalPerubahan').value;
+            const waktu = document.getElementById('waktuPerubahan').value;
+            const timestamp = new Date(tanggal + 'T' + waktu).toISOString();
+            
+            const id = 'TRR' + Date.now();
+            console.log('Creating entry with ID:', id);
+            
+            const newEntry = {
+                id: id,
+                pksUnit: document.getElementById('pksUnit').value,
+                namaTransportir: document.getElementById('namaTransportir').value,
+                noPol: document.getElementById('noPol').value.toUpperCase(),
+                tarraLama: parseFloat(document.getElementById('tarraLama').value),
+                tarraBaru: parseFloat(document.getElementById('tarraBaru').value),
+                selisih: parseFloat(document.getElementById('tarraBaru').value) - parseFloat(document.getElementById('tarraLama').value),
+                tanggalPerubahan: tanggal,
+                waktuPerubahan: waktu,
+                timestamp: timestamp,
+                statusSurat: document.getElementById('statusSurat').value,
+                nomorSurat: document.getElementById('nomorSurat').value || '-',
+                keterangan: document.getElementById('keterangan').value,
+                namaPIC: document.getElementById('namaPIC').value,
+                createdAt: new Date().toISOString(),
+                updatedAt: null,
+                timeDiff: null
+            };
+            
+            tarraData.unshift(newEntry);
+            
+            // Save documents and photos
+            const docData = {};
+            if (tempSuratTransportir) docData.suratTransportir = tempSuratTransportir;
+            if (tempSuratPemasaran) docData.suratPemasaran = tempSuratPemasaran;
+            if (tempPhotos.length > 0) docData.photos = tempPhotos;
+            
+            if (Object.keys(docData).length > 0) {
+                try {
+                    // Save to localStorage (always works)
+                    localStorage.setItem(DOC_KEY_PREFIX + id, JSON.stringify(docData));
+                    console.log('Documents saved to localStorage');
+                    
+                    // Try cloud storage too if available
+                    if (window.storage) {
+                        try {
+                            await window.storage.set(DOC_KEY_PREFIX + id, JSON.stringify(docData));
+                            console.log('Documents saved to cloud');
+                        } catch (e) {
+                            console.log('Cloud storage for docs not available');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error saving documents:', error);
+                }
+            }
+            
+            await saveData();
+            console.log('Entry saved with ID:', id);
+            
+            alert('✅ Data perubahan tarra berhasil ACCEPTED dan disimpan!');
+            
+            // Reset form
+            this.reset();
+            setDefaultDateTime();
+            tempPhotos = [];
+            tempSuratTransportir = null;
+            tempSuratPemasaran = null;
+            document.getElementById('previewContainer').innerHTML = '';
+            document.getElementById('previewSuratTransportir').style.display = 'none';
+            document.getElementById('previewSuratPemasaran').style.display = 'none';
+            document.getElementById('nomorSuratGroup').style.display = 'none';
+            document.getElementById('suratPemasaranGroup').style.display = 'none';
+            
+            updateStats();
+            renderTable();
+            updateTransportirFilter();
+            updateAllCharts();
+        });
+
+        function updateStats() {
+            const total = tarraData.length;
+            const draft = tarraData.filter(d => d.statusSurat === 'draft').length;
+            const complete = tarraData.filter(d => d.statusSurat === 'approved').length;
+            const rejected = tarraData.filter(d => d.statusSurat === 'rejected').length;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const todayCount = tarraData.filter(d => d.tanggalPerubahan === today).length;
+            
+            const thisMonth = new Date().toISOString().slice(0, 7);
+            const monthCount = tarraData.filter(d => d.tanggalPerubahan.startsWith(thisMonth)).length;
+            
+            document.getElementById('totalPerubahan').textContent = total;
+            document.getElementById('draftCount').textContent = draft;
+            document.getElementById('completeCount').textContent = complete;
+            document.getElementById('rejectedCount').textContent = rejected;
+            document.getElementById('todayCount').textContent = todayCount;
+            document.getElementById('monthCount').textContent = monthCount;
+        }
+
+        function updateTransportirFilter() {
+            const transportirs = [...new Set(tarraData.map(d => d.namaTransportir))].sort();
+            const filterSelect = document.getElementById('filterTransportir');
+            const datalist = document.getElementById('transportirList');
+            
+            filterSelect.innerHTML = '<option value="">Semua Transportir</option>';
+            datalist.innerHTML = '';
+            
+            transportirs.forEach(t => {
+                filterSelect.innerHTML += `<option value="${t}">${t}</option>`;
+                datalist.innerHTML += `<option value="${t}">`;
+            });
+        }
+
+        function calculateTimeDiff(createdAt, updatedAt) {
+            if (!updatedAt) return '-';
+            
+            const diff = new Date(updatedAt) - new Date(createdAt);
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            
+            if (hours > 24) {
+                const days = Math.floor(hours / 24);
+                return `${days} hari ${hours % 24} jam`;
+            } else if (hours > 0) {
+                return `${hours} jam ${minutes} menit`;
+            } else {
+                return `${minutes} menit`;
+            }
+        }
+
+        function renderTable(data = null) {
+            const displayData = data || tarraData;
+            filteredData = displayData;
+            const tbody = document.getElementById('dataTable');
+            
+            if (displayData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: #999;">Tidak ada data yang ditampilkan</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = displayData.map(item => {
+                const selisihClass = item.selisih > 0 ? 'diff-positive' : (item.selisih < 0 ? 'diff-negative' : '');
+                const selisihSign = item.selisih > 0 ? '+' : '';
+                const timeDiff = calculateTimeDiff(item.createdAt, item.updatedAt);
+                
+                let statusText = 'Draft';
+                let statusClass = 'draft';
+                if (item.statusSurat === 'approved') {
+                    statusText = 'Complete';
+                    statusClass = 'complete';
+                } else if (item.statusSurat === 'rejected') {
+                    statusText = 'Rejected';
+                    statusClass = 'rejected';
+                }
+                
+                return `
+                    <tr>
+                        <td style="white-space: nowrap;">${formatDateTime(item.tanggalPerubahan, item.waktuPerubahan)}</td>
+                        <td>${item.pksUnit}</td>
+                        <td>${item.namaTransportir}</td>
+                        <td><strong>${item.noPol}</strong></td>
+                        <td>${formatNumber(item.tarraLama)} Kg</td>
+                        <td>${formatNumber(item.tarraBaru)} Kg</td>
+                        <td class="diff-value ${selisihClass}">${selisihSign}${formatNumber(item.selisih)} Kg</td>
+                        <td><span class="status-badge status-${statusClass}">${statusText}</span></td>
+                        <td>${item.nomorSurat}</td>
+                        <td>${timeDiff !== '-' ? '<span class="time-diff">' + timeDiff + '</span>' : '-'}</td>
+                        <td>${item.namaPIC}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-primary btn-sm" onclick="showDetail('${item.id}')">Detail</button>
+                            ${item.statusSurat === 'draft' ? `<button class="btn btn-success btn-sm" onclick="updateStatus('${item.id}')">Complete</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function handleWaktuFilter() {
+            const filterWaktu = document.getElementById('filterWaktu').value;
+            const customDateFrom = document.getElementById('customDateFrom');
+            const customDateTo = document.getElementById('customDateTo');
+            
+            if (filterWaktu === 'custom') {
+                customDateFrom.style.display = 'block';
+                customDateTo.style.display = 'block';
+            } else {
+                customDateFrom.style.display = 'none';
+                customDateTo.style.display = 'none';
+                filterData();
+            }
+        }
+
+        function filterData() {
+            const pksFilter = document.getElementById('filterPKS').value;
+            const transportirFilter = document.getElementById('filterTransportir').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            const waktuFilter = document.getElementById('filterWaktu').value;
+            const searchText = document.getElementById('searchNoPol').value.toUpperCase();
+            
+            let filtered = tarraData;
+            
+            if (pksFilter) {
+                filtered = filtered.filter(d => d.pksUnit === pksFilter);
+            }
+            
+            if (transportirFilter) {
+                filtered = filtered.filter(d => d.namaTransportir === transportirFilter);
+            }
+            
+            if (statusFilter) {
+                filtered = filtered.filter(d => d.statusSurat === statusFilter);
+            }
+            
+            if (searchText) {
+                filtered = filtered.filter(d => d.noPol.includes(searchText));
+            }
+            
+            // Time filter
+            if (waktuFilter) {
+                const now = new Date();
+                const today = now.toISOString().split('T')[0];
+                
+                if (waktuFilter === 'today') {
+                    filtered = filtered.filter(d => d.tanggalPerubahan === today);
+                } else if (waktuFilter === 'week') {
+                    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    filtered = filtered.filter(d => new Date(d.tanggalPerubahan) >= weekAgo);
+                } else if (waktuFilter === 'month') {
+                    const thisMonth = now.toISOString().slice(0, 7);
+                    filtered = filtered.filter(d => d.tanggalPerubahan.startsWith(thisMonth));
+                } else if (waktuFilter === 'custom') {
+                    const dateFrom = document.getElementById('dateFrom').value;
+                    const dateTo = document.getElementById('dateTo').value;
+                    if (dateFrom) {
+                        filtered = filtered.filter(d => d.tanggalPerubahan >= dateFrom);
+                    }
+                    if (dateTo) {
+                        filtered = filtered.filter(d => d.tanggalPerubahan <= dateTo);
+                    }
+                }
+            }
+            
+            renderTable(filtered);
+            updateAllCharts();
+        }
+
+        function resetFilter() {
+            document.getElementById('filterPKS').value = '';
+            document.getElementById('filterTransportir').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterWaktu').value = '';
+            document.getElementById('searchNoPol').value = '';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('customDateFrom').style.display = 'none';
+            document.getElementById('customDateTo').style.display = 'none';
+            renderTable();
+            updateAllCharts();
+        }
+
+        async function updateStatus(id) {
+            const item = tarraData.find(d => d.id === id);
+            if (!item) return;
+            
+            const nomorSurat = prompt('Masukkan Nomor Surat Pemasaran:', '');
+            if (!nomorSurat) return;
+            
+            item.statusSurat = 'approved';
+            item.nomorSurat = nomorSurat;
+            item.updatedAt = new Date().toISOString();
+            
+            await saveData();
+            updateStats();
+            renderTable();
+            updateAllCharts();
+            alert('✅ Status berhasil diupdate menjadi "Complete"');
+        }
+
+        async function showDetail(id) {
+            currentDetailId = id;
+            const item = tarraData.find(d => d.id === id);
+            if (!item) return;
+            
+            let docData = {};
+            try {
+                // Try localStorage first
+                const localDoc = localStorage.getItem(DOC_KEY_PREFIX + id);
+                if (localDoc) {
+                    docData = JSON.parse(localDoc);
+                    console.log('Documents loaded from localStorage');
+                } else if (window.storage) {
+                    // Try cloud storage if localStorage empty
+                    const result = await window.storage.get(DOC_KEY_PREFIX + id);
+                    if (result && result.value) {
+                        docData = JSON.parse(result.value);
+                        console.log('Documents loaded from cloud');
+                    }
+                }
+            } catch (error) {
+                console.log('No documents found or error:', error.message);
+            }
+            
+            const selisihClass = item.selisih > 0 ? 'diff-positive' : (item.selisih < 0 ? 'diff-negative' : '');
+            const selisihSign = item.selisih > 0 ? '+' : '';
+            const timeDiff = calculateTimeDiff(item.createdAt, item.updatedAt);
+            
+            let statusText = 'Draft';
+            if (item.statusSurat === 'approved') statusText = 'Complete';
+            else if (item.statusSurat === 'rejected') statusText = 'Rejected';
+            
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="info-grid">
+                    <div class="info-label">PKS/Unit:</div>
+                    <div class="info-value"><strong>${item.pksUnit}</strong></div>
+                    
+                    <div class="info-label">Transportir:</div>
+                    <div class="info-value">${item.namaTransportir}</div>
+                    
+                    <div class="info-label">No. Polisi:</div>
+                    <div class="info-value"><strong>${item.noPol}</strong></div>
+                    
+                    <div class="info-label">Tarra Lama:</div>
+                    <div class="info-value">${formatNumber(item.tarraLama)} Kg</div>
+                    
+                    <div class="info-label">Tarra Baru:</div>
+                    <div class="info-value">${formatNumber(item.tarraBaru)} Kg</div>
+                    
+                    <div class="info-label">Selisih:</div>
+                    <div class="info-value diff-value ${selisihClass}">${selisihSign}${formatNumber(item.selisih)} Kg</div>
+                    
+                    <div class="info-label">Tanggal & Waktu:</div>
+                    <div class="info-value">${formatDateTime(item.tanggalPerubahan, item.waktuPerubahan)}</div>
+                    
+                    <div class="info-label">Status:</div>
+                    <div class="info-value"><span class="status-badge status-${item.statusSurat}">${statusText}</span></div>
+                    
+                    <div class="info-label">No. Surat:</div>
+                    <div class="info-value">${item.nomorSurat}</div>
+                    
+                    <div class="info-label">Selisih Waktu:</div>
+                    <div class="info-value">${timeDiff !== '-' ? '<span class="time-diff">' + timeDiff + '</span>' : '-'}</div>
+                    
+                    <div class="info-label">PIC:</div>
+                    <div class="info-value"><strong>${item.namaPIC}</strong></div>
+                    
+                    <div class="info-label">Keterangan:</div>
+                    <div class="info-value">${item.keterangan || '-'}</div>
+                </div>
+                
+                ${docData.suratTransportir ? `
+                    <h3 style="margin-top: 25px; margin-bottom: 12px; color: #1e3c72;">📄 Surat Transportir:</h3>
+                    <img src="${docData.suratTransportir}" style="max-width: 100%; border-radius: 8px; cursor: pointer;" onclick="openPhotoFullscreen('${docData.suratTransportir}')">
+                ` : ''}
+                
+                ${docData.suratPemasaran ? `
+                    <h3 style="margin-top: 25px; margin-bottom: 12px; color: #1e3c72;">📄 Surat Pemasaran:</h3>
+                    <img src="${docData.suratPemasaran}" style="max-width: 100%; border-radius: 8px; cursor: pointer;" onclick="openPhotoFullscreen('${docData.suratPemasaran}')">
+                ` : ''}
+                
+                ${docData.photos && docData.photos.length > 0 ? `
+                    <h3 style="margin-top: 25px; margin-bottom: 12px; color: #1e3c72;">📷 Foto Alasan Perubahan:</h3>
+                    <div class="photo-grid">
+                        ${docData.photos.map(photo => `
+                            <div class="photo-item" onclick="openPhotoFullscreen('${photo}')">
+                                <img src="${photo}" alt="Foto">
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                <div style="margin-top: 25px; padding-top: 20px; border-top: 3px solid #e0e0e0;">
+                    <small style="color: #666;">Dicatat pada: ${formatFullDateTime(item.createdAt)}</small>
+                    ${item.updatedAt ? `<br><small style="color: #666;">Diupdate pada: ${formatFullDateTime(item.updatedAt)}</small>` : ''}
+                </div>
+            `;
+            
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function openPhotoFullscreen(photoSrc) {
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html>
+                <head><title>Preview Dokumen</title></head>
+                <body style="margin:0; background:#000; display:flex; align-items:center; justify-content:center; height:100vh;">
+                    <img src="${photoSrc}" style="max-width:100%; max-height:100%; cursor: pointer;" onclick="window.close()">
+                </body>
+                </html>
+            `);
+        }
+
+        async function downloadDetailPDF() {
+            if (!currentDetailId) return;
+            
+            const { jsPDF } = window.jspdf;
+            const content = document.getElementById('modalBody');
+            
+            try {
+                const canvas = await html2canvas(content, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const imgWidth = 190;
+                const pageHeight = 277;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 10;
+                
+                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight + 10;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                pdf.save(`Detail-Tarra-${currentDetailId}.pdf`);
+                alert('✅ Detail berhasil di-download sebagai PDF!');
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('⚠️ Gagal membuat PDF. Coba lagi.');
+            }
+        }
+
+        async function downloadDetailJPEG() {
+            if (!currentDetailId) return;
+            
+            const content = document.getElementById('modalBody');
+            
+            try {
+                const canvas = await html2canvas(content, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+                
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Detail-Tarra-${currentDetailId}.jpeg`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    alert('✅ Detail berhasil di-download sebagai JPEG!');
+                }, 'image/jpeg', 0.95);
+            } catch (error) {
+                console.error('Error generating JPEG:', error);
+                alert('⚠️ Gagal membuat JPEG. Coba lagi.');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('active');
+            currentDetailId = null;
+        }
+
+        function formatDateTime(date, time) {
+            const d = new Date(date + 'T' + time);
+            return d.toLocaleString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatFullDateTime(dateString) {
+            const d = new Date(dateString);
+            return d.toLocaleString('id-ID', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // Charts
+        function initCharts() {
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                }
+            };
+
+            chartPKS = new Chart(document.getElementById('chartPKS'), {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: commonOptions
+            });
+
+            chartStatus = new Chart(document.getElementById('chartStatus'), {
+                type: 'doughnut',
+                data: { labels: [], datasets: [] },
+                options: commonOptions
+            });
+
+            chartTrend = new Chart(document.getElementById('chartTrend'), {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            chartTransportir = new Chart(document.getElementById('chartTransportir'), {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonOptions,
+                    indexAxis: 'y',
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+
+            chartPIC = new Chart(document.getElementById('chartPIC'), {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonOptions,
+                    indexAxis: 'y',
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+
+        function populateChartFilters() {
+            const pksList = ['PKS Tanah Putih', 'PKS Tanjung Medan', 'PKS Sei Galuh', 'PKS Sei Pagar', 
+                             'PKS Sei Garo', 'PKS Sei Buatan', 'PKS Lubuk Dalam', 'PKS Tandun',
+                             'PKS Terantam', 'PKS Sei Tapung', 'PKS Sei Rokan', 'PKS Sei Intan', 'PPIS Tandun'];
+            
+            const pksFilter = document.getElementById('chartPKSFilter');
+            if (pksFilter) {
+                pksList.forEach(pks => {
+                    pksFilter.innerHTML += `<option value="${pks}">${pks}</option>`;
+                });
+            }
+        }
+
+        function getFilteredDataForPeriod(period) {
+            if (period === 'all') return tarraData;
+            
+            const now = new Date();
+            if (period === 'month') {
+                const thisMonth = now.toISOString().slice(0, 7);
+                return tarraData.filter(d => d.tanggalPerubahan.startsWith(thisMonth));
+            } else if (period === 'week') {
+                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                return tarraData.filter(d => new Date(d.tanggalPerubahan) >= weekAgo);
+            }
+            return tarraData;
+        }
+
+        function updateChartPKS() {
+            const pksFilter = document.getElementById('chartPKSFilter').value;
+            const period = document.getElementById('chartPKSPeriod').value;
+            
+            let data = getFilteredDataForPeriod(period);
+            if (pksFilter) {
+                data = data.filter(d => d.pksUnit === pksFilter);
+            }
+            
+            const pksCounts = {};
+            data.forEach(item => {
+                pksCounts[item.pksUnit] = (pksCounts[item.pksUnit] || 0) + 1;
+            });
+            
+            chartPKS.data.labels = Object.keys(pksCounts);
+            chartPKS.data.datasets = [{
+                label: 'Jumlah Perubahan',
+                data: Object.values(pksCounts),
+                backgroundColor: 'rgba(30, 60, 114, 0.7)',
+                borderColor: 'rgba(30, 60, 114, 1)',
+                borderWidth: 2
+            }];
+            chartPKS.update();
+        }
+
+        function updateChartStatus() {
+            const period = document.getElementById('chartStatusPeriod').value;
+            const data = getFilteredDataForPeriod(period);
+            
+            const statusCounts = {
+                'Draft': data.filter(d => d.statusSurat === 'draft').length,
+                'Complete': data.filter(d => d.statusSurat === 'approved').length,
+                'Rejected': data.filter(d => d.statusSurat === 'rejected').length
+            };
+            
+            chartStatus.data.labels = Object.keys(statusCounts);
+            chartStatus.data.datasets = [{
+                data: Object.values(statusCounts),
+                backgroundColor: ['#ffc107', '#28a745', '#dc3545'],
+                borderWidth: 2
+            }];
+            chartStatus.update();
+        }
+
+        function updateChartTrend() {
+            const months = parseInt(document.getElementById('chartTrendMonths').value);
+            
+            const monthCounts = {};
+            const now = new Date();
+            for (let i = months - 1; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const key = d.toISOString().slice(0, 7);
+                monthCounts[key] = 0;
+            }
+            
+            tarraData.forEach(item => {
+                const month = item.tanggalPerubahan.slice(0, 7);
+                if (monthCounts.hasOwnProperty(month)) {
+                    monthCounts[month]++;
+                }
+            });
+            
+            chartTrend.data.labels = Object.keys(monthCounts).map(m => {
+                const [y, mo] = m.split('-');
+                return new Date(y, mo - 1).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+            });
+            chartTrend.data.datasets = [{
+                label: 'Perubahan Tarra',
+                data: Object.values(monthCounts),
+                borderColor: 'rgba(30, 60, 114, 1)',
+                backgroundColor: 'rgba(30, 60, 114, 0.1)',
+                tension: 0.4,
+                fill: true
+            }];
+            chartTrend.update();
+        }
+
+        function updateChartTransportir() {
+            const topN = parseInt(document.getElementById('chartTransportirTop').value);
+            const period = document.getElementById('chartTransportirPeriod').value;
+            
+            const data = getFilteredDataForPeriod(period);
+            
+            const transportirCounts = {};
+            data.forEach(item => {
+                transportirCounts[item.namaTransportir] = (transportirCounts[item.namaTransportir] || 0) + 1;
+            });
+            
+            const topTransportir = Object.entries(transportirCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, topN);
+            
+            chartTransportir.data.labels = topTransportir.map(t => t[0]);
+            chartTransportir.data.datasets = [{
+                label: 'Jumlah Perubahan',
+                data: topTransportir.map(t => t[1]),
+                backgroundColor: 'rgba(42, 82, 152, 0.7)',
+                borderColor: 'rgba(42, 82, 152, 1)',
+                borderWidth: 2
+            }];
+            chartTransportir.update();
+        }
+
+        function updateChartPIC() {
+            const topN = parseInt(document.getElementById('chartPICTop').value);
+            const period = document.getElementById('chartPICPeriod').value;
+            
+            const data = getFilteredDataForPeriod(period);
+            
+            const picCounts = {};
+            data.forEach(item => {
+                picCounts[item.namaPIC] = (picCounts[item.namaPIC] || 0) + 1;
+            });
+            
+            const topPIC = Object.entries(picCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, topN);
+            
+            chartPIC.data.labels = topPIC.map(p => p[0]);
+            chartPIC.data.datasets = [{
+                label: 'Jumlah Perubahan',
+                data: topPIC.map(p => p[1]),
+                backgroundColor: 'rgba(118, 75, 162, 0.7)',
+                borderColor: 'rgba(118, 75, 162, 1)',
+                borderWidth: 2
+            }];
+            chartPIC.update();
+        }
+        function updateAllCharts() {
+            updateChartPKS();
+            updateChartStatus();
+            updateChartTrend();
+            updateChartTransportir();
+            updateChartPIC();
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            if (filteredData.length === 0) {
+                alert('Tidak ada data untuk diekspor');
+                return;
+            }
+            
+            const exportData = filteredData.map(item => ({
+                'Tanggal': item.tanggalPerubahan,
+                'Waktu': item.waktuPerubahan,
+                'PKS/Unit': item.pksUnit,
+                'Transportir': item.namaTransportir,
+                'No. Polisi': item.noPol,
+                'Tarra Lama (Kg)': item.tarraLama,
+                'Tarra Baru (Kg)': item.tarraBaru,
+                'Selisih (Kg)': item.selisih,
+                'Status': item.statusSurat === 'draft' ? 'Draft' : (item.statusSurat === 'approved' ? 'Complete' : 'Rejected'),
+                'No. Surat': item.nomorSurat,
+                'No. Surat Transportir': item.noSuratTransportir || '-',
+                'Selisih Waktu': calculateTimeDiff(item.createdAt, item.updatedAt),
+                'PIC': item.namaPIC,
+                'Keterangan': item.keterangan
+            }));
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Data Tarra');
+            
+            // Add chart data summary
+            try {
+                const chartData = [];
+                
+                // PKS Summary
+                const pksCounts = {};
+                filteredData.forEach(item => {
+                    pksCounts[item.pksUnit] = (pksCounts[item.pksUnit] || 0) + 1;
+                });
+                chartData.push(['']);
+                chartData.push(['GRAFIK: Perubahan per PKS']);
+                chartData.push(['PKS', 'Jumlah']);
+                Object.entries(pksCounts).forEach(([pks, count]) => {
+                    chartData.push([pks, count]);
+                });
+                
+                // Status Summary
+                chartData.push(['']);
+                chartData.push(['GRAFIK: Status Permohonan']);
+                chartData.push(['Status', 'Jumlah']);
+                chartData.push(['Draft', filteredData.filter(d => d.statusSurat === 'draft').length]);
+                chartData.push(['Complete', filteredData.filter(d => d.statusSurat === 'approved').length]);
+                chartData.push(['Rejected', filteredData.filter(d => d.statusSurat === 'rejected').length]);
+                
+                // Transportir Summary
+                const transportirCounts = {};
+                filteredData.forEach(item => {
+                    transportirCounts[item.namaTransportir] = (transportirCounts[item.namaTransportir] || 0) + 1;
+                });
+                chartData.push(['']);
+                chartData.push(['GRAFIK: Top Transportir']);
+                chartData.push(['Transportir', 'Jumlah']);
+                Object.entries(transportirCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10)
+                    .forEach(([transportir, count]) => {
+                        chartData.push([transportir, count]);
+                    });
+                
+                // PIC Summary
+                const picCounts = {};
+                filteredData.forEach(item => {
+                    picCounts[item.namaPIC] = (picCounts[item.namaPIC] || 0) + 1;
+                });
+                chartData.push(['']);
+                chartData.push(['GRAFIK: Perubahan per PIC']);
+                chartData.push(['PIC', 'Jumlah']);
+                Object.entries(picCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10)
+                    .forEach(([pic, count]) => {
+                        chartData.push([pic, count]);
+                    });
+                
+                const wsChart = XLSX.utils.aoa_to_sheet(chartData);
+                XLSX.utils.book_append_sheet(wb, wsChart, 'Grafik Summary');
+            } catch (e) {
+                console.log('Chart summary skipped:', e);
+            }
+            
+            const filename = `MANTRA-${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, filename);
+            
+            alert('✅ Data dan grafik summary berhasil di-export ke Excel!');
+        }
+
+        // Export to PDF
+        function exportToPDF() {
+            if (filteredData.length === 0) {
+                alert('Tidak ada data untuk diekspor');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            
+            // Title
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('MANTRA - MONITORING PERUBAHAN TARRA', 148, 15, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 25);
+            doc.text(`Jumlah Data: ${filteredData.length} record`, 14, 30);
+            
+            // Table
+            const tableData = filteredData.map(item => {
+                let status = 'Draft';
+                if (item.statusSurat === 'approved') status = 'Complete';
+                else if (item.statusSurat === 'rejected') status = 'Rejected';
+                
+                return [
+                    formatDateTime(item.tanggalPerubahan, item.waktuPerubahan),
+                    item.pksUnit,
+                    item.namaTransportir,
+                    item.noPol,
+                    formatNumber(item.tarraLama),
+                    formatNumber(item.tarraBaru),
+                    formatNumber(item.selisih),
+                    status,
+                    item.nomorSurat,
+                    item.namaPIC
+                ];
+            });
+            
+            doc.autoTable({
+                startY: 35,
+                head: [['Tgl & Jam', 'PKS', 'Transportir', 'No. Pol', 'Tarra Lama', 'Tarra Baru', 'Selisih', 'Status', 'No. Surat', 'PIC']],
+                body: tableData,
+                styles: { fontSize: 7 },
+                headStyles: { fillColor: [30, 60, 114], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245, 245, 245] }
+            });
+            
+            // Add charts on new pages
+            try {
+                const charts = [
+                    { id: 'chartPKS', title: 'Perubahan Tarra per PKS' },
+                    { id: 'chartStatus', title: 'Status Permohonan' },
+                    { id: 'chartTrend', title: 'Trend Bulanan' },
+                    { id: 'chartTransportir', title: 'Top Transportir' },
+                    { id: 'chartPIC', title: 'Perubahan per PIC' }
+                ];
+                
+                for (let i = 0; i < charts.length; i++) {
+                    const chart = charts[i];
+                    const canvas = document.getElementById(chart.id);
+                    
+                    if (canvas) {
+                        doc.addPage();
+                        doc.setFontSize(14);
+                        doc.setFont(undefined, 'bold');
+                        doc.text(chart.title, 148, 15, { align: 'center' });
+                        
+                        const imgData = canvas.toDataURL('image/png');
+                        doc.addImage(imgData, 'PNG', 20, 25, 250, 150);
+                    }
+                }
+                
+                console.log('Charts added to PDF');
+            } catch (error) {
+                console.log('Chart capture error:', error);
+            }
+            
+            const filename = `MANTRA-${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+            
+            alert('✅ PDF berhasil di-download dengan data dan 5 chart!');
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
